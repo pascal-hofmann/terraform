@@ -19,9 +19,10 @@ type nodeExpandModule struct {
 }
 
 var (
-	_ RemovableIfNotTargeted = (*nodeExpandModule)(nil)
-	_ GraphNodeEvalable      = (*nodeExpandModule)(nil)
-	_ GraphNodeReferencer    = (*nodeExpandModule)(nil)
+	_ RemovableIfNotTargeted    = (*nodeExpandModule)(nil)
+	_ GraphNodeEvalable         = (*nodeExpandModule)(nil)
+	_ GraphNodeReferencer       = (*nodeExpandModule)(nil)
+	_ GraphNodeReferenceOutside = (*nodeExpandModule)(nil)
 
 	// modules both record their expansion, and require expansion from their
 	// parent modules.
@@ -46,7 +47,7 @@ func (n *nodeExpandModule) ModulePath() addrs.Module {
 	// This node represents the module call within a module,
 	// so return the CallerAddr as the path as the module
 	// call may expand into multiple child instances
-	return n.Addr.Parent()
+	return n.Addr
 }
 
 // GraphNodeReferencer implementation
@@ -75,6 +76,11 @@ func (n *nodeExpandModule) References() []*addrs.Reference {
 		refs, _ = lang.ReferencesInExpr(n.ModuleCall.ForEach)
 	}
 	return appendResourceDestroyReferences(refs)
+}
+
+// GraphNodeReferenceOutside
+func (n *nodeExpandModule) ReferenceOutside() (selfPath, referencePath addrs.Module) {
+	return n.Addr, n.Addr.Parent()
 }
 
 // RemovableIfNotTargeted implementation
